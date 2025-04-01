@@ -98,12 +98,89 @@ export class CriarProdutoDto {
 ```
 ## 🚦 Regras de Negócio Implementadas
 
+### Na exclusão de categoria:
+```typescript
+async deletarCategoria(id: number): Promise<void> {
+  const categoria = await this.categoriaRepository.findOne({
+    where: { id },
+    relations: ['produtos']
+  });
 
+  if (!categoria) {
+    throw new Error('Categoria não encontrada');
+  }
 
+  if (categoria.produtos && categoria.produtos.length > 0) {
+    throw new Error(
+      `Não é possível excluir: ${categoria.produtos.length} produto(s) vinculado(s)`
+    );
+  }
 
+  await this.categoriaRepository.remove(categoria);
+}
+```
+## 📊 Consultas Customizadas
+### Busca de produtos por categoria:
+```typescript
+async buscarPorCategoria(nomeCategoria: string): Promise<Produto[]> {
+  return this.produtoRepository
+    .createQueryBuilder('produto')
+    .leftJoinAndSelect('produto.categoria', 'categoria')
+    .where('categoria.nome LIKE :nome', { nome: `%${nomeCategoria}%` })
+    .getMany();
+}
+```
+## ⚙️ Configuração TypeORM (tsconfig.json)
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "forceConsistentCasingInFileNames": true
+  }
+}
+```
+## 💡 Dicas de Implementação
+### Atualização de Produto:
+```typescript
+async atualizarProduto(id: number, dados: AtualizarProdutoDto): Promise<Produto> {
+  const produto = await this.produtoRepository.findOneBy({ id });
+  
+  if (!produto) {
+    throw new Error('Produto não encontrado');
+  }
 
+  // Atualiza apenas os campos fornecidos
+  Object.assign(produto, dados);
+  produto.dataAtualizacao = new Date();
 
+  return this.produtoRepository.save(produto);
+}
+```
+## Filtros Avançados:
+```typescript
+async filtrarProdutos(filtros: {
+  precoMin?: number;
+  precoMax?: number;
+  categoriaId?: number;
+}): Promise<Produto[]> {
+  const query = this.produtoRepository.createQueryBuilder('produto');
 
+  if (filtros.categoriaId) {
+    query.andWhere('produto.categoriaId = :categoriaId', { 
+      categoriaId: filtros.categoriaId 
+    });
+  }
 
+  if (filtros.precoMin) {
+    query.andWhere('produto.preco >= :precoMin', { 
+      precoMin: filtros.precoMin 
+    });
+  }
 
-
+  return query.getMany();
+}
+```
