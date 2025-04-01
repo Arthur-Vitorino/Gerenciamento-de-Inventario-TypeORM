@@ -1,5 +1,8 @@
 # Notas Técnicas - Gestão de Categorias e Produtos
 
+## Alunos
+Arthur Ribeiro Vitorino, Anna Júlia Cúrcio, Débora Rezende, Ana Carolina de Andrade
+
 ## 🏷️ Entidade Categoria
 ```typescript
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
